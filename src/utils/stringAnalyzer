@@ -1,0 +1,112 @@
+const crypto = require("crypto");
+
+class StringAnalyzer {
+  static analyzeString(value) {
+    if (typeof value !== "string") {
+      throw new Error("Value must be a string");
+    }
+
+    const length = value.length;
+    const isPalindrome = this.isPalindrome(value);
+    const uniqueCharacters = this.getUniqueCharacterCount(value);
+    const wordCount = this.getWordCount(value);
+    const sha256Hash = this.getSHA256Hash(value);
+    const characterFrequencyMap = this.getCharacterFrequencyMap(value);
+
+    return {
+      length,
+      is_palindrome: isPalindrome,
+      unique_characters: uniqueCharacters,
+      word_count: wordCount,
+      sha256_hash: sha256Hash,
+      character_frequency_map: characterFrequencyMap,
+    };
+  }
+
+  static isPalindrome(str) {
+    const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return cleaned === cleaned.split("").reverse().join("");
+  }
+
+  static getUniqueCharacterCount(str) {
+    const uniqueChars = new Set(str.toLowerCase());
+    return uniqueChars.size;
+  }
+
+  static getWordCount(str) {
+    if (str.trim() === "") return 0;
+    return str.trim().split(/\s+/).length;
+  }
+
+  static getSHA256Hash(str) {
+    return crypto.createHash("sha256").update(str).digest("hex");
+  }
+
+  static getCharacterFrequencyMap(str) {
+    const frequencyMap = {};
+    for (const char of str) {
+      const lowerChar = char.toLowerCase();
+      frequencyMap[lowerChar] = (frequencyMap[lowerChar] || 0) + 1;
+    }
+    return frequencyMap;
+  }
+
+  static parseNaturalLanguageQuery(query) {
+    const lowerQuery = query.toLowerCase();
+    const filters = {};
+
+    if (
+      lowerQuery.includes("palindromic") ||
+      lowerQuery.includes("palindrome")
+    ) {
+      filters.is_palindrome = true;
+    }
+
+    if (lowerQuery.includes("single word")) {
+      filters.word_count = 1;
+    }
+
+    if (lowerQuery.includes("longer than")) {
+      const match = lowerQuery.match(/longer than (\d+)/);
+      if (match) {
+        filters.min_length = parseInt(match[1]) + 1;
+      }
+    }
+
+    if (lowerQuery.includes("shorter than")) {
+      const match = lowerQuery.match(/shorter than (\d+)/);
+      if (match) {
+        filters.max_length = parseInt(match[1]) - 1;
+      }
+    }
+
+    if (lowerQuery.includes("contain") && lowerQuery.includes("letter")) {
+      const match = lowerQuery.match(/letter ([a-z])/);
+      if (match) {
+        filters.contains_character = match[1];
+      }
+    }
+
+    if (lowerQuery.includes("contain") && lowerQuery.includes("character")) {
+      const match = lowerQuery.match(/character ([a-z])/);
+      if (match) {
+        filters.contains_character = match[1];
+      }
+    }
+
+    if (lowerQuery.includes("word count") || lowerQuery.includes("words")) {
+      const match = lowerQuery.match(/(\d+)\s*words?/);
+      if (match) {
+        filters.word_count = parseInt(match[1]);
+      }
+    }
+
+    if (lowerQuery.includes("first vowel")) {
+      filters.contains_character = "a";
+    }
+
+    return filters;
+  }
+}
+
+module.exports = StringAnalyzer;
